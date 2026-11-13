@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.source-repo/
+.env
+.env.*
+!.env.example
+!backend/.env.example
+android/.gradle/
+android/local.properties
+test-results/
+playwright-report/
