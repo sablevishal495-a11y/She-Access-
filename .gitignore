@@ -8,4 +8,4 @@ dist/
 android/.gradle/
 android/local.properties
 test-results/
-playwright-report/
+playwright-report/apk/

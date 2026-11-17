@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { config } from "@/config";
 import { formatPrice, getStatus, STATUS_META } from "@/lib/stock";
 import type { Coordinates, MachineWithDistance } from "@/types";
+
+type Located = MachineWithDistance & { location: Coordinates };
 
 interface Props {
   center: Coordinates;
@@ -15,7 +17,7 @@ interface Props {
   onSelect: (id: string | null) => void;
 }
 
-function machineIcon(machine: MachineWithDistance, selected: boolean): L.DivIcon {
+function machineIcon(machine: Located, selected: boolean): L.DivIcon {
   const root = document.createElement("div");
   root.className = `map-pin map-pin--${getStatus(machine)}${selected ? " map-pin--selected" : ""}`;
 
@@ -24,7 +26,7 @@ function machineIcon(machine: MachineWithDistance, selected: boolean): L.DivIcon
   dot.setAttribute("aria-hidden", "true");
 
   const price = document.createElement("span");
-  price.textContent = formatPrice(machine.pricePerPad, machine.currency);
+  price.textContent = machine.pricePerPad !== null ? formatPrice(machine.pricePerPad, machine.currency) : "•";
   root.append(dot, price);
 
   return L.divIcon({
@@ -42,10 +44,16 @@ const userIcon = L.divIcon({
   iconAnchor: [20, 20],
 });
 
-export function MapView({ center, user, machines, selectedId, focusKey, focusMode, onSelect }: Props) {
+export function MapView({ center, user, machines: allMachines, selectedId, focusKey, focusMode, onSelect }: Props) {
+  const machines = useMemo(
+    () => allMachines.filter((machine): machine is Located => machine.location !== null),
+    [allMachines],
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
+  /** Re-applies the last camera move; used when the map only gets its real size later. */
+  const refitRef = useRef<(() => void) | null>(null);
   const onSelectRef = useRef(onSelect);
   const [tilesUnavailable, setTilesUnavailable] = useState(false);
   onSelectRef.current = onSelect;
@@ -61,11 +69,27 @@ export function MapView({ center, user, machines, selectedId, focusKey, focusMod
     const tiles = L.tileLayer(config.mapTileUrl, {
       attribution: config.mapAttribution,
       maxZoom: 19,
+      detectRetina: false,
+      keepBuffer: 4,
+      updateWhenZooming: false,
     }).addTo(map);
 
     let failedTiles = 0;
-    tiles.on("tileerror", () => {
+    tiles.on("tileerror", (event) => {
       failedTiles += 1;
+      // Load a failed tile from the backup server instead of leaving a grey square.
+      const { tile, coords } = event as L.TileErrorEvent;
+      const image = tile as HTMLImageElement & { retried?: boolean };
+      if (!image.retried) {
+        image.retried = true;
+        const subdomains = "abc";
+        image.src = L.Util.template(config.mapTileFallbackUrl, {
+          s: subdomains[Math.abs(coords.x + coords.y) % subdomains.length],
+          z: coords.z,
+          x: coords.x,
+          y: coords.y,
+        });
+      }
       if (failedTiles >= 3) setTilesUnavailable(true);
     });
     tiles.on("tileload", () => {
@@ -76,8 +100,20 @@ export function MapView({ center, user, machines, selectedId, focusKey, focusMod
     mapRef.current = map;
     markersRef.current = layer;
 
+    let lastWidth = 0;
+    let lastHeight = 0;
     const observer = typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(() => map.invalidateSize({ pan: false }))
+      ? new ResizeObserver((entries) => {
+        const { width, height } = entries[0].contentRect;
+        const wasTiny = lastWidth < 50 || lastHeight < 50;
+        const changed = Math.abs(width - lastWidth) > 1 || Math.abs(height - lastHeight) > 1;
+        lastWidth = width;
+        lastHeight = height;
+        if (!changed) return;
+        map.invalidateSize({ pan: false });
+        // The map was created before it had its real size: zoom it again now.
+        if (wasTiny && width >= 50 && height >= 50) refitRef.current?.();
+      })
       : null;
     observer?.observe(containerRef.current);
     const frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
@@ -102,7 +138,7 @@ export function MapView({ center, user, machines, selectedId, focusKey, focusMod
       const status = getStatus(machine);
       const marker = L.marker([machine.location.lat, machine.location.lng], {
         icon: machineIcon(machine, machine.id === selectedId),
-        title: `${machine.name}, ${STATUS_META[status].label}, ${formatPrice(machine.pricePerPad, machine.currency)}`,
+        title: `${machine.name}, ${STATUS_META[status].label}`,
         keyboard: true,
         zIndexOffset: machine.id === selectedId ? 1000 : 0,
       });
@@ -124,30 +160,34 @@ export function MapView({ center, user, machines, selectedId, focusKey, focusMod
   useEffect(() => {
     const map = mapRef.current;
     if (!map || focusKey === 0) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (focusMode === "me") {
-      map.flyTo([center.lat, center.lng], 16, { animate: !reducedMotion, duration: 0.55 });
-      return;
-    }
+    const fit = (animate: boolean) => {
+      map.invalidateSize({ pan: false });
+      if (focusMode === "me") {
+        map.setView([center.lat, center.lng], 16, { animate });
+        return;
+      }
+      const points: L.LatLngTuple[] = machines.map((machine) => [machine.location.lat, machine.location.lng]);
+      if (user || points.length === 0) points.push([center.lat, center.lng]);
+      if (points.length === 1) {
+        map.setView(points[0], 14, { animate });
+        return;
+      }
+      map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 15, animate });
+    };
 
-    const points: L.LatLngTuple[] = [[center.lat, center.lng]];
-    machines.forEach((machine) => points.push([machine.location.lat, machine.location.lng]));
-    map.fitBounds(L.latLngBounds(points), {
-      padding: [48, 48],
-      maxZoom: 15,
-      animate: !reducedMotion,
-    });
-  }, [center.lat, center.lng, focusKey, focusMode, machines]);
+    refitRef.current = () => fit(false);
+    // Long zoom animations leave grey squares while tiles load, so jump instead.
+    fit(false);
+  }, [center.lat, center.lng, focusKey, focusMode, machines, user]);
 
   useEffect(() => {
     const map = mapRef.current;
     const selected = machines.find((machine) => machine.id === selectedId);
     if (!map || !selected) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    map.flyTo([selected.location.lat, selected.location.lng], Math.max(15, map.getZoom()), {
+    map.setView([selected.location.lat, selected.location.lng], Math.max(15, map.getZoom()), {
       animate: !reducedMotion,
-      duration: 0.5,
     });
   }, [machines, selectedId]);
 

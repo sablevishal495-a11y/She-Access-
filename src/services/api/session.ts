@@ -1,7 +1,7 @@
-import { isMockApi } from "@/config";
 import type { Session } from "@/types";
 
-const KEY = "she-access.session.v2";
+const KEY = "she-access.session.v3";
+const OLD_KEYS = ["she-access.session.v1", "she-access.session.v2"];
 
 export function loadSession(): Session | null {
   try {
@@ -10,11 +10,9 @@ export function loadSession(): Session | null {
     const parsed = JSON.parse(raw) as Partial<Session>;
     if (
       parsed &&
-      typeof parsed.token === "string" &&
-      parsed.token.length > 0 &&
       typeof parsed.user?.id === "string" &&
-      (parsed.demo ? isMockApi : typeof parsed.user.phone === "string" && parsed.user.phone.length > 0) &&
-      (!isMockApi || parsed.token.startsWith("demo-"))
+      typeof parsed.user.name === "string" &&
+      parsed.user.name.trim().length > 0
     ) {
       return parsed as Session;
     }
@@ -35,7 +33,7 @@ export function saveSession(session: Session): void {
 export function clearSession(): void {
   try {
     localStorage.removeItem(KEY);
-    localStorage.removeItem("she-access.session.v1");
+    OLD_KEYS.forEach((key) => localStorage.removeItem(key));
   } catch {
     /* ignore */
   }

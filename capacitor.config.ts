@@ -14,6 +14,11 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: false,
   },
   plugins: {
+    // Send fetch() through Android's native HTTP stack so API calls are not
+    // blocked by browser CORS rules inside the app's web view.
+    CapacitorHttp: {
+      enabled: true,
+    },
     SplashScreen: {
       // The app hides the splash as soon as the UI is ready (see App.tsx);
       // this timeout is only a safety net.
