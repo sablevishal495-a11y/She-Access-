@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Crosshair, LocateFixed, LogOut, MapPin, MapPinOff, RefreshCw, Search, UserRound, WifiOff, X } from "lucide-react";
+import { Crosshair, LocateFixed, LogOut, MapPin, Navigation, MapPinOff, RefreshCw, Search, UserRound, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { LogoMark, Wordmark } from "@/components/shared/Logo";
 import { MachineCard, MachineCardSkeleton } from "@/components/MachineCard";
@@ -11,6 +11,7 @@ import { haversineKm } from "@/lib/geo";
 import { getStatus } from "@/lib/stock";
 import { fetchAllMachines, toUserMessage } from "@/services/api/api";
 import type { LocationIssue } from "@/services/location";
+import { lookupPlaceName } from "@/services/placeName";
 import { requestUserLocation, useUserLocation } from "@/services/userLocation";
 import type { MachineWithDistance, Session, VendingMachine } from "@/types";
 import { cn } from "@/utils/cn";
@@ -36,6 +37,16 @@ export default function DashboardScreen({ session, onLogout }: Props) {
   const center = userLocation.coords ?? config.defaultLocation;
   const locating = userLocation.status === "locating";
   const locationIssue: LocationIssue | null = userLocation.status === "error" ? userLocation.issue : null;
+  /** Short name of where the user is, e.g. "Shree Nagar, Nagpur". */
+  const [placeName, setPlaceName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const coords = userLocation.coords;
+    if (!coords) return;
+    let cancelled = false;
+    void lookupPlaceName(coords).then((name) => { if (!cancelled) setPlaceName(name); });
+    return () => { cancelled = true; };
+  }, [userLocation.coords]);
   const [machines, setMachines] = useState<VendingMachine[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [error, setError] = useState("");
@@ -200,6 +211,12 @@ export default function DashboardScreen({ session, onLogout }: Props) {
                   <div className="min-w-0 flex-1">
                     <p className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8992a3]">{located ? "Sorted by distance" : locating ? "Please wait" : "Showing"}</p>
                     <p className="mt-0.5 truncate text-[14px] font-bold text-[#283550]">{located ? "Nearest to you first" : locating ? "Finding your location…" : "All machines"}</p>
+                    {located && (
+                      <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-[#5d6880]">
+                        <Navigation className="h-3 w-3 shrink-0 fill-brand-500 text-brand-500" aria-hidden="true" />
+                        <span className="truncate">{placeName ?? "Your current location"}</span>
+                      </p>
+                    )}
                   </div>
                   <button type="button" onClick={locate} disabled={locating} aria-label="Use my current location" title="Use my current location" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 disabled:opacity-60">
                     <LocateFixed className={cn("h-[19px] w-[19px]", locating && "animate-pulse")} aria-hidden="true" />

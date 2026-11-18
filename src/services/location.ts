@@ -46,7 +46,7 @@ async function ensurePermission(): Promise<void> {
 }
 
 /** Position from the web view's own geolocation (Android LocationManager): no Google "Location Accuracy" pop-up. */
-function browserPosition(): Promise<Coordinates> {
+function browserPosition(highAccuracy: boolean, timeout: number): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {
       reject(new LocationError("unavailable"));
@@ -55,7 +55,7 @@ function browserPosition(): Promise<Coordinates> {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       (error) => reject(error),
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
+      { enableHighAccuracy: highAccuracy, timeout, maximumAge: 60_000 },
     );
   });
 }
@@ -64,12 +64,19 @@ export async function getUserLocation(): Promise<Coordinates> {
   try {
     await ensurePermission();
     try {
-      return await browserPosition();
+      // GPS + network through the web view (no Google pop-up).
+      return await browserPosition(true, 12_000);
     } catch (first) {
       if (classify(first).reason === "denied") throw first;
+    }
+    try {
+      // Network-only position, in case GPS has no signal (e.g. indoors).
+      return await browserPosition(false, 8_000);
+    } catch (second) {
+      if (classify(second).reason === "denied") throw second;
       // Fallback: the plugin. If phone location is off it asks the user to turn it on.
       const pos = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: false,
+        enableHighAccuracy: true,
         timeout: 15_000,
         maximumAge: 60_000,
       });

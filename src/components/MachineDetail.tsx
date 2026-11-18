@@ -40,7 +40,7 @@ export function MachineDetail({ machine, showDistance, onClose }: Props) {
 
         {status === "offline" && (
           <p className="mt-5 border-l-2 border-rose-400 pl-3 text-[13px] leading-relaxed text-rose-700">
-            This machine is not reporting right now. Its last known stock may be out of date.
+            This machine is offline right now.
           </p>
         )}
 
@@ -50,7 +50,7 @@ export function MachineDetail({ machine, showDistance, onClose }: Props) {
             <p className="mt-2 text-[31px] font-bold leading-none tracking-tight text-brand-700">{formatPrice(machine.pricePerPad, machine.currency)}</p>
           </div>
           <div className="border-l border-[#e9edf2] pl-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">{status === "offline" ? "Last reported stock" : "Pads available"}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">Pads available</p>
             <p className="mt-2 text-[31px] font-bold leading-none tracking-tight text-[#1d2940]">
               {machine.stock ?? "—"}{machine.capacity !== null && <span className="ml-1 text-sm font-medium text-[#a4acba]">/ {machine.capacity}</span>}
             </p>

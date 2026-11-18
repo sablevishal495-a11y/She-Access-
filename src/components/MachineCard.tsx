@@ -14,12 +14,12 @@ export function MachineCard({ machine, showDistance, onSelect }: Props) {
   const status = getStatus(machine);
   const meta = STATUS_META[status];
   const stockText = status === "offline"
-    ? machine.stock !== null ? `Offline · ${machine.stock} pads last reported` : "Offline"
+    ? machine.stock !== null ? `Offline · ${machine.stock} pads available` : "Offline"
     : status === "unknown"
       ? "Stock not reported"
       : status === "empty"
         ? "Out of stock"
-        : `${machine.stock} pads left`;
+        : `${machine.stock} pads available`;
   const hasPrice = machine.pricePerPad !== null;
 
   return (
