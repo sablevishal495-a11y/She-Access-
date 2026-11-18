@@ -138,7 +138,8 @@
 .map-pin__dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #19a979; }
 .map-pin--low .map-pin__dot { background: #e5a52f; }
 .map-pin--empty .map-pin__dot { background: #e76e80; }
-.map-pin--offline .map-pin__dot { background: #9da7b6; }
+.map-pin--offline .map-pin__dot { background: #e5484d; }
+.map-pin--offline { color: #c6303a; }
 .map-pin--unknown .map-pin__dot { background: #c8ced8; }
 .map-pin--selected { transform: translateY(-3px); border-color: #5268e8; background: #5268e8; color: #fff; box-shadow: 0 8px 22px rgba(43,64,164,.35); }
 .map-pin--selected::after { border-color: #5268e8; }

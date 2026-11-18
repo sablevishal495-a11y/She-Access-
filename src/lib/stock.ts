@@ -47,10 +47,10 @@ export const STATUS_META: Record<
   },
   offline: {
     label: "Offline",
-    chip: "bg-slate-100 text-slate-600",
-    dot: "bg-slate-400",
-    bar: "bg-slate-400",
-    tile: "bg-slate-100 text-slate-500",
+    chip: "bg-red-50 text-red-700",
+    dot: "bg-red-500",
+    bar: "bg-red-400",
+    tile: "bg-red-50 text-red-500",
   },
 };
 

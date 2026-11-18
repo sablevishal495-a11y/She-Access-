@@ -25,7 +25,7 @@ export function MachineDetail({ machine, showDistance, onClose }: Props) {
         </button>
 
         <div className="mt-9 flex items-center justify-between gap-3 max-md:mt-6">
-          <span className={cn("inline-flex items-center gap-2 text-xs font-bold", status === "available" ? "text-emerald-700" : status === "low" ? "text-amber-700" : status === "empty" ? "text-rose-600" : "text-slate-500")}>
+          <span className={cn("inline-flex items-center gap-2 text-xs font-bold", status === "available" ? "text-emerald-700" : status === "low" ? "text-amber-700" : status === "empty" || status === "offline" ? "text-rose-600" : "text-slate-500")}>
             <span className={cn("h-2 w-2 rounded-full", meta.dot)} aria-hidden="true" />{meta.label}
           </span>
           {showDistance && machine.distanceKm !== null && <span className="text-xs text-[#8790a1]">{formatDistance(machine.distanceKm)} away</span>}
@@ -35,11 +35,11 @@ export function MachineDetail({ machine, showDistance, onClose }: Props) {
         </h2>
         <p className="mt-3 flex items-start gap-2 text-[13px] leading-relaxed text-[#788195]">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" aria-hidden="true" />
-          {machine.address || "Address not available"}
+          {machine.address || machine.name}
         </p>
 
         {status === "offline" && (
-          <p className="mt-5 border-l-2 border-amber-400 pl-3 text-[13px] leading-relaxed text-amber-800">
+          <p className="mt-5 border-l-2 border-rose-400 pl-3 text-[13px] leading-relaxed text-rose-700">
             This machine is not reporting right now. Its last known stock may be out of date.
           </p>
         )}

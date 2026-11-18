@@ -161,6 +161,7 @@ const FIELDS = {
   restocked: ["lastRestockedAt", "lastRefilledAt", "lastRefillDate"],
   lastSeen: ["lastHeartBeatTime", "lastHeartbeatTime", "lastSeenAt"],
   productName: ["productName", "product"],
+  machineType: ["machineType", "type"],
 } as const;
 
 /** Builds an address line from separate parts when there is no single address field. */
@@ -210,8 +211,12 @@ const sum = (values: (number | null)[]) =>
 
 export function parseMachine(value: unknown, index: number): VendingMachine | null {
   if (!isRecord(value)) return null;
-  const name = toStr(pick(value, [...FIELDS.name]));
-  if (!name) return null;
+  const code = toStr(pick(value, [...FIELDS.name]));
+  if (!code) return null;
+  const place = addressFrom(value);
+  const productName = toStr(pick(value, [...FIELDS.productName]));
+  // Users see the place, not the machine code.
+  const name = place || (productName && /napkin|pad/i.test(productName) ? "Sanitary napkin machine" : "Vending machine");
 
   const geo = parseLatLngString(pick(value, [...FIELDS.geo]));
   const lat = geo?.lat ?? toNum(pick(value, [...FIELDS.lat]));
@@ -230,9 +235,11 @@ export function parseMachine(value: unknown, index: number): VendingMachine | nu
   const currency = toStr(pick(value, [...FIELDS.currency]))?.toUpperCase();
 
   return {
-    id: toStr(pick(value, [...FIELDS.id])) ?? `machine-${index}-${name}`,
+    id: toStr(pick(value, [...FIELDS.id])) ?? `machine-${index}-${code}`,
     name,
-    address: addressFrom(value),
+    address: "",
+    code,
+    multiProduct: products.length > 0 || /multi/i.test(toStr(pick(value, [...FIELDS.machineType])) ?? ""),
     location: hasLocation ? { lat, lng } : null,
     pricePerPad: price,
     currency: currency && /^[A-Z]{3}$/.test(currency) ? currency : "INR",
@@ -242,7 +249,7 @@ export function parseMachine(value: unknown, index: number): VendingMachine | nu
     openHours: toStr(pick(value, [...FIELDS.openHours])),
     lastRestockedAt: toDate(pick(value, [...FIELDS.restocked])),
     lastSeenAt: toDate(pick(value, [...FIELDS.lastSeen])),
-    productName: toStr(pick(value, [...FIELDS.productName])),
+    productName,
     products,
   };
 }
@@ -291,7 +298,8 @@ export async function fetchMachines(params: {
   }
   const machines = items
     .map((item, i) => parseMachine(item, page * size + i))
-    .filter((m): m is VendingMachine => m !== null);
+    // Multi-product machines are not shown to users.
+    .filter((m): m is VendingMachine => m !== null && !m.multiProduct);
 
   const total = toNum(pick(meta, ["totalElements", "total", "totalCount", "count", "page.totalElements"]));
   const totalPages = toNum(pick(meta, ["totalPages", "page.totalPages"]));
@@ -302,4 +310,19 @@ export async function fetchMachines(params: {
     (totalPages !== null ? page + 1 >= totalPages : total !== null ? (page + 1) * pageSize >= total : items.length < pageSize);
 
   return { machines, page, last, total };
+}
+
+/**
+ * Every machine matching `search`, reading page after page.
+ * Needed so "nearest first" really compares all machines, not just one page.
+ */
+export async function fetchAllMachines(params: { search?: string; signal?: AbortSignal } = {}): Promise<VendingMachine[]> {
+  const all = new Map<string, VendingMachine>();
+  const size = 100;
+  for (let page = 0; page < 50; page += 1) {
+    const result = await fetchMachines({ page, size, search: params.search, signal: params.signal });
+    result.machines.forEach((machine) => all.set(machine.id, machine));
+    if (result.last) break;
+  }
+  return [...all.values()];
 }

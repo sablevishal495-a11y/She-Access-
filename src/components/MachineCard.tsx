@@ -33,9 +33,9 @@ export function MachineCard({ machine, showDistance, onSelect }: Props) {
         <p className="truncate text-[14px] font-bold leading-snug text-[#1d2940] sm:text-[15px]">
           {machine.name}
         </p>
-        <p className="mt-1 truncate text-[12px] text-[#778094] sm:text-[13px]">{machine.address}</p>
+        {machine.address && <p className="mt-1 truncate text-[12px] text-[#778094] sm:text-[13px]">{machine.address}</p>}
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          <span className={cn("inline-flex items-center gap-1.5 font-semibold", status === "available" ? "text-emerald-700" : status === "low" ? "text-amber-700" : status === "empty" ? "text-rose-600" : "text-slate-500")}>
+          <span className={cn("inline-flex items-center gap-1.5 font-semibold", status === "available" ? "text-emerald-700" : status === "low" ? "text-amber-700" : status === "empty" || status === "offline" ? "text-rose-600" : "text-slate-500")}>
             <span className={cn("h-[7px] w-[7px] rounded-full", meta.dot)} aria-hidden="true" />
             {stockText}
           </span>

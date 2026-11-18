@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { LoginScreen, useAuthFlow } from "@/features/auth";
 import { DashboardScreen } from "@/features/machines";
 import { initBackButton } from "@/lib/backButton";
+import { requestUserLocation } from "@/services/userLocation";
 
 export default function App() {
   const auth = useAuthFlow();
@@ -14,6 +15,8 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       void SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => {});
     }
+    // Ask for location right away, so the dashboard can show the nearest machines first.
+    void requestUserLocation();
     return removeBackButton;
   }, []);
 

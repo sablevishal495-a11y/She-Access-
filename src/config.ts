@@ -22,6 +22,11 @@ export const config = {
   /** Machines loaded per page. */
   pageSize: bounded(env.VITE_PAGE_SIZE, 20, 1, 200),
 
+  /** Google Maps JavaScript API key. Empty = use the OpenStreetMap map instead. */
+  googleMapsApiKey: (env.VITE_GOOGLE_MAPS_API_KEY ?? "").trim(),
+  /** Google Cloud "Map ID" (needed for the price pins). DEMO_MAP_ID works for testing. */
+  googleMapId: env.VITE_GOOGLE_MAP_ID?.trim() || "DEMO_MAP_ID",
+
   mapTileUrl:
     env.VITE_MAP_TILE_URL?.trim() ||
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",

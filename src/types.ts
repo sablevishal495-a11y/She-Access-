@@ -20,8 +20,14 @@ export interface MachineProduct {
  */
 export interface VendingMachine {
   id: string;
+  /** What users see as the title: the place, e.g. "Sid Home" (never the machine code). */
   name: string;
+  /** Extra address line, when the API has one separate from the place name. */
   address: string;
+  /** Internal machine code, e.g. "Napk_0001". Not shown to users. */
+  code: string;
+  /** True for machines that sell several products (p1–p4 slots / machineType "Multi"). */
+  multiProduct: boolean;
   /** Null when the API has no coordinates for this machine (it is then left off the map). */
   location: Coordinates | null;
   /** Price of ONE sanitary napkin, in `currency` units. */
