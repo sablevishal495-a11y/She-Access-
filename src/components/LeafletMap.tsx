@@ -166,7 +166,7 @@ export function LeafletMap({ center, user, machines: allMachines, selectedId, fo
 
   return (
     <div className="relative h-full w-full">
-      <div ref={containerRef} className="h-full w-full" role="application" aria-label="Map of nearby sanitary pad vending machines" />
+      <div ref={containerRef} className="h-full w-full" role="application" aria-label="Map of nearby sanitary napkin vending machines" />
       {tilesUnavailable && (
         <p className="map-tile-notice" role="status">Map background is unavailable. You can still use the pins and list.</p>
       )}

@@ -46,11 +46,11 @@ export function MachineDetail({ machine, showDistance, onClose }: Props) {
 
         <div className="mt-8 grid grid-cols-2 gap-6 border-y border-[#e9edf2] py-6 max-md:mt-6">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">Price per pad</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">Price per sanitary napkin</p>
             <p className="mt-2 text-[31px] font-bold leading-none tracking-tight text-brand-700">{formatPrice(machine.pricePerPad, machine.currency)}</p>
           </div>
           <div className="border-l border-[#e9edf2] pl-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">Pads available</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c94a4]">Sanitary napkins available</p>
             <p className="mt-2 text-[31px] font-bold leading-none tracking-tight text-[#1d2940]">
               {machine.stock ?? "—"}{machine.capacity !== null && <span className="ml-1 text-sm font-medium text-[#a4acba]">/ {machine.capacity}</span>}
             </p>

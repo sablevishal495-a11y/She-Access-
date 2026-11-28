@@ -161,5 +161,5 @@ export function GoogleMap({ center, user, machines: allMachines, selectedId, foc
     if ((map.getZoom() ?? 0) < 15) map.setZoom(15);
   }, [machines, selectedId, ready]);
 
-  return <div ref={containerRef} className="h-full w-full" role="application" aria-label="Map of nearby sanitary pad vending machines" />;
+  return <div ref={containerRef} className="h-full w-full" role="application" aria-label="Map of nearby sanitary napkin vending machines" />;
 }

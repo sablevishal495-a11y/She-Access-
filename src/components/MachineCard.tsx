@@ -13,20 +13,21 @@ interface Props {
 export function MachineCard({ machine, showDistance, onSelect }: Props) {
   const status = getStatus(machine);
   const meta = STATUS_META[status];
+  const available = `${machine.stock} ${machine.stock === 1 ? "sanitary napkin" : "sanitary napkins"} available`;
   const stockText = status === "offline"
-    ? machine.stock !== null ? `Offline · ${machine.stock} pads available` : "Offline"
+    ? machine.stock !== null ? `Offline · ${available}` : "Offline"
     : status === "unknown"
       ? "Stock not reported"
       : status === "empty"
         ? "Out of stock"
-        : `${machine.stock} pads available`;
+        : available;
   const hasPrice = machine.pricePerPad !== null;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(machine.id)}
-      aria-label={`${machine.name}, ${meta.label}${hasPrice ? `, ${formatPrice(machine.pricePerPad, machine.currency)} per pad` : ""}. View details`}
+      aria-label={`${machine.name}, ${meta.label}${hasPrice ? `, ${formatPrice(machine.pricePerPad, machine.currency)} per sanitary napkin` : ""}. View details`}
       className="group flex w-full items-start justify-between gap-3 border-b border-[#edf0f3] px-7 py-4 text-left transition-colors hover:bg-[#f8f9fc] focus-visible:bg-[#f8f9fc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-300 active:bg-brand-50 max-md:px-5"
     >
       <div className="min-w-0 flex-1">
@@ -48,7 +49,7 @@ export function MachineCard({ machine, showDistance, onSelect }: Props) {
             <span className="text-[18px] font-extrabold tracking-tight text-[#222d48]">
               {formatPrice(machine.pricePerPad, machine.currency)}
             </span>
-            <span className="text-[11px] text-[#9299a8]">{machine.products.length > 1 ? "from" : "per pad"}</span>
+            <span className="text-[11px] text-[#9299a8]">{machine.products.length > 1 ? "from" : "per sanitary napkin"}</span>
           </>
         )}
         <ArrowUpRight className="mt-1.5 h-4 w-4 text-[#b8bece] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand-600" aria-hidden="true" />
