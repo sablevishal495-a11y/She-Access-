@@ -2,9 +2,10 @@ import { Capacitor } from "@capacitor/core";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { useEffect } from "react";
-import { LoginScreen, OtpScreen, useAuthFlow } from "@/features/auth";
+import { LoginScreen, useAuthFlow } from "@/features/auth";
 import { DashboardScreen } from "@/features/machines";
 import { initBackButton } from "@/lib/backButton";
+import { requestUserLocation } from "@/services/userLocation";
 
 export default function App() {
   const auth = useAuthFlow();
@@ -14,6 +15,8 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       void SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => {});
     }
+    // Ask for location right away, so the dashboard can show the nearest machines first.
+    void requestUserLocation();
     return removeBackButton;
   }, []);
 
@@ -28,10 +31,6 @@ export default function App() {
     })().catch(() => {});
   }, [auth.session]);
 
-  let screen: React.ReactNode;
-  if (auth.session) screen = <DashboardScreen key="dashboard" session={auth.session} onLogout={auth.logout} />;
-  else if (auth.pending) screen = <OtpScreen key="otp" phone={auth.toE164(auth.pending.phone)} onVerify={auth.verify} onResend={auth.resendOtp} onBack={auth.backToLogin} />;
-  else screen = <LoginScreen key="login" initialPhone={auth.lastPhone} onSubmit={auth.requestOtp} onExplore={auth.enterDemo} />;
-
-  return screen;
+  if (auth.session) return <DashboardScreen key="dashboard" session={auth.session} onLogout={auth.logout} />;
+  return <LoginScreen key="login" initialName={auth.lastName} onSubmit={auth.login} />;
 }

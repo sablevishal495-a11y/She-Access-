@@ -7,8 +7,9 @@ export function getStatus(
   m: Pick<VendingMachine, "online" | "stock" | "capacity">,
 ): MachineStatus {
   if (!m.online) return "offline";
+  if (m.stock === null) return "unknown";
   if (m.stock <= 0) return "empty";
-  if (m.stock / Math.max(m.capacity, 1) <= LOW_STOCK_RATIO) return "low";
+  if (m.capacity !== null && m.stock / Math.max(m.capacity, 1) <= LOW_STOCK_RATIO) return "low";
   return "available";
 }
 
@@ -37,16 +38,24 @@ export const STATUS_META: Record<
     bar: "bg-red-500",
     tile: "bg-red-50 text-red-500",
   },
+  unknown: {
+    label: "Stock not reported",
+    chip: "bg-slate-100 text-slate-600",
+    dot: "bg-slate-300",
+    bar: "bg-slate-300",
+    tile: "bg-slate-100 text-slate-500",
+  },
   offline: {
     label: "Offline",
-    chip: "bg-slate-100 text-slate-600",
-    dot: "bg-slate-400",
-    bar: "bg-slate-400",
-    tile: "bg-slate-100 text-slate-500",
+    chip: "bg-red-50 text-red-700",
+    dot: "bg-red-500",
+    bar: "bg-red-400",
+    tile: "bg-red-50 text-red-500",
   },
 };
 
-export function formatPrice(amount: number, currency = "INR"): string {
+export function formatPrice(amount: number | null, currency = "INR"): string {
+  if (amount === null) return "—";
   try {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -59,7 +68,8 @@ export function formatPrice(amount: number, currency = "INR"): string {
   }
 }
 
-export function timeAgo(iso: string): string {
+export function timeAgo(iso: string | null): string {
+  if (!iso) return "Unknown";
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "Unknown";
   const mins = Math.max(0, Math.round((Date.now() - then) / 60_000));
@@ -71,8 +81,3 @@ export function timeAgo(iso: string): string {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-/** +919876543210 -> "+91 98765 43210" */
-export function formatPhone(e164: string): string {
-  const m = /^(\+\d{1,3})(\d{5})(\d{5})$/.exec(e164);
-  return m ? `${m[1]} ${m[2]} ${m[3]}` : e164;
-}
