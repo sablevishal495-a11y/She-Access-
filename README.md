@@ -1,6 +1,6 @@
 # SHE-ACCESS
 
-A responsive app for finding sanitary pad vending machines, checking stock and price, and viewing locations on an interactive map. Built with React, Vite, Tailwind CSS, Leaflet, and optional Capacitor support.
+A responsive app for finding sanitary napkin vending machines, checking stock and price, and viewing locations on an interactive map. Built with React, Vite, Tailwind CSS, Leaflet, and optional Capacitor support.
 
 ## Run the app
 

@@ -204,7 +204,7 @@ export default function DashboardScreen({ session, onLogout }: Props) {
               <div className="results-panel__top">
                 <p className="results-eyebrow">HI, {session.user.name.toUpperCase()}</p>
                 <h1 className="results-title">Care, close by.</h1>
-                <p className="results-description">Find a sanitary pad vending machine when you need one.</p>
+                <p className="results-description">Find a sanitary napkin vending machine when you need one.</p>
 
                 <div className="area-control">
                   <MapPin className="h-[18px] w-[18px] shrink-0 text-brand-600" aria-hidden="true" />
